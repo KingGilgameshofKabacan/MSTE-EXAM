@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CE Mock Board Exam - MSTE/Construction</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .option-card { transition: all 0.2s ease; }
+        .option-card:hover { transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- DATASET: 200 ITEMS BASED ON TOS ---
+        const EXAM_DATA = [
+            // 1. CALCULUS & 2. DIFF EQ (Conceptual)
+            { id: 1, category: "Calculus", question: "What represents the slope of the tangent line to a curve at a given point?", options: ["Integral", "Derivative", "Limit", "Asymptote"], answer: 1 },
+            { id: 2, category: "Calculus", question: "If the first derivative of a function is zero, the point is considered a:", options: ["Inflection point", "Critical point", "Discontinuity", "Vertical Asymptote"], answer: 1 },
+            { id: 3, category: "Calculus", question: "The process of finding the area under a curve is known as:", options: ["Differentiation", "Integration", "Limits", "Series Expansion"], answer: 1 },
+            { id: 4, category: "Calculus", question: "Which theorem states that if a function is continuous on a closed interval [a,b] and differentiable on (a,b), there exists a point c where f'(c) equals the average rate of change?", options: ["Rolle's Theorem", "Mean Value Theorem", "Intermediate Value Theorem", "Squeeze Theorem"], answer: 1 },
+            { id: 5, category: "Calculus", question: "A sequence which has a finite limit is called:", options: ["Divergent", "Convergent", "Oscillatory", "Infinite"], answer: 1 },
+            { id: 6, category: "Calculus", question: "In partial derivatives, a function of two variables z = f(x,y) represents a:", options: ["Line", "Surface", "Volume", "Vector"], answer: 1 },
+            { id: 7, category: "Diff Eq", question: "The highest order of the derivative appearing in a differential equation is called the ___ of the equation.", options: ["Degree", "Order", "Power", "Rank"], answer: 1 },
+            { id: 8, category: "Diff Eq", question: "Which of the following describes a differential equation where the dependent variable and its derivatives are all to the first power?", options: ["Linear", "Homogeneous", "Exact", "Bernoulli"], answer: 0 },
+            { id: 9, category: "Diff Eq", question: "What is the Laplace transform of a unit step function?", options: ["1/s", "1/s^2", "s", "1"], answer: 0 },
+            { id: 10, category: "Diff Eq", question: "A solution to a differential equation that cannot be obtained from the general solution by choosing specific values for constants is called a:", options: ["Particular Solution", "Singular Solution", "Trivial Solution", "General Solution"], answer: 1 },
+            { id: 11, category: "Calculus", question: "Curvature is defined as the reciprocal of:", options: ["Radius of gyration", "Radius of curvature", "Arc length", "Tangent"], answer: 1 },
+            { id: 12, category: "Calculus", question: "What test is used to determine if an infinite series converges by comparing it to an integral?", options: ["Ratio Test", "Root Test", "Integral Test", "Comparison Test"], answer: 2 },
+            
+            // 3. ENGINEERING DATA ANALYSIS
+            { id: 13, category: "Data Analysis", question: "The measure of the central tendency that represents the most frequent value in a dataset is:", options: ["Mean", "Median", "Mode", "Standard Deviation"], answer: 2 },
+            { id: 14, category: "Data Analysis", question: "In probability, events A and B are mutually exclusive if:", options: ["P(A and B) = P(A)P(B)", "P(A or B) = P(A) + P(B)", "P(A and B) = 1", "P(A|B) = P(A)"], answer: 1 },
+            { id: 15, category: "Data Analysis", question: "Which distribution is symmetric and bell-shaped?", options: ["Poisson", "Binomial", "Normal", "Exponential"], answer: 2 },
+            { id: 16, category: "Data Analysis", question: "Type I error in hypothesis testing is defined as:", options: ["Rejecting a true null hypothesis", "Accepting a false null hypothesis", "Rejecting a false null hypothesis", "Accepting a true null hypothesis"], answer: 0 },
+            { id: 17, category: "Data Analysis", question: "The square of the standard deviation is called:", options: ["Range", "Variance", "Coefficient of Variation", "Mean Deviation"], answer: 1 },
+            { id: 18, category: "Data Analysis", question: "In linear regression, the value R-squared is known as:", options: ["Correlation Coefficient", "Coefficient of Determination", "Standard Error", "Slope"], answer: 1 },
+            { id: 19, category: "Data Analysis", question: "Which sampling method involves dividing the population into subgroups and sampling from each?", options: ["Simple Random", "Stratified", "Cluster", "Systematic"], answer: 1 },
+            
+            // 4. NUMERICAL METHODS
+            { id: 20, category: "Numerical Methods", question: "Which method is used for finding roots of equations using tangent lines?", options: ["Bisection Method", "Newton-Raphson Method", "Secant Method", "Trapezoidal Rule"], answer: 1 },
+            { id: 21, category: "Numerical Methods", question: "Simpson's 1/3 rule is a method for numerical:", options: ["Differentiation", "Integration", "Interpolation", "Root finding"], answer: 1 },
+            { id: 22, category: "Numerical Methods", question: "Curve fitting is the process of constructing a curve (mathematical function) that has the best fit to a series of:", options: ["Data points", "Linear equations", "Differentials", "Integrals"], answer: 0 },
+            
+            // 5. PHYSICS
+            { id: 23, category: "Physics", question: "Which law states that for every action, there is an equal and opposite reaction?", options: ["Newton's 1st Law", "Newton's 2nd Law", "Newton's 3rd Law", "Law of Gravitation"], answer: 2 },
+            { id: 24, category: "Physics", question: "The rate of doing work is called:", options: ["Energy", "Power", "Force", "Momentum"], answer: 1 },
+            { id: 25, category: "Physics", question: "Hooke's Law states that the force needed to extend a spring is proportional to:", options: ["Mass", "Distance extended", "Velocity", "Time"], answer: 1 },
+            { id: 26, category: "Physics", question: "In an elastic collision, which of the following is conserved?", options: ["Momentum only", "Kinetic Energy only", "Both Momentum and Kinetic Energy", "Neither"], answer: 2 },
+            { id: 27, category: "Physics", question: "The tendency of an object to resist changes in its state of rotation is called:", options: ["Torque", "Angular Momentum", "Moment of Inertia", "Centripetal Force"], answer: 2 },
+            { id: 28, category: "Physics", question: "Bernoulli's principle is a statement of conservation of ___ for flowing fluids.", options: ["Mass", "Energy", "Momentum", "Angular Momentum"], answer: 1 },
+            
+            // 6. ENGINEERING ECONOMY
+            { id: 29, category: "Economy", question: "The interest calculated on the principal plus any previously accumulated interest is:", options: ["Simple Interest", "Compound Interest", "Nominal Interest", "Effective Interest"], answer: 1 },
+            { id: 30, category: "Economy", question: "The decrease in value of a physical property with the passage of time is called:", options: ["Inflation", "Depreciation", "Depletion", "Amortization"], answer: 1 },
+            { id: 31, category: "Economy", question: "What is the worth of property that is equal to the original cost less depreciation?", options: ["Market Value", "Book Value", "Salvage Value", "Scrap Value"], answer: 1 },
+            { id: 32, category: "Economy", question: "Costs that do not vary with output or production volume are called:", options: ["Variable Costs", "Fixed Costs", "Marginal Costs", "Sunk Costs"], answer: 1 },
+            { id: 33, category: "Economy", question: "A series of equal payments occurring at equal periods of time is called a(n):", options: ["Amortization", "Annuity", "Gradient", "Bond"], answer: 1 },
+            { id: 34, category: "Economy", question: "The interest rate at which the present worth of cash flows for a project is zero is called:", options: ["Return on Investment", "Benefit-Cost Ratio", "Internal Rate of Return (IRR)", "Minimum Attractive Rate of Return"], answer: 2 },
+            { id: 35, category: "Economy", question: "Capitalized cost is the present worth of a project with an infinite life. It is calculated as:", options: ["First Cost + Annual Cost", "First Cost + (Annual Cost / Interest Rate)", "First Cost * Interest Rate", "Annual Cost / First Cost"], answer: 1 },
+            { id: 36, category: "Economy", question: "Money spent in the past that cannot be recovered is called:", options: ["Opportunity Cost", "Sunk Cost", "Marginal Cost", "Life Cycle Cost"], answer: 1 },
+
+            // 7. CONSTRUCTION SURVEYING
+            { id: 37, category: "Surveying", question: "The difference between the upper stadia hair and lower stadia hair reading is called:", options: ["Stadia Interval", "Stadia Constant", "Focusing Distance", "Parallax"], answer: 0 },
+            { id: 38, category: "Surveying", question: "Systematic errors are also known as:", options: ["Accidental Errors", "Cumulative Errors", "Random Errors", "Mistakes"], answer: 1 },
+            { id: 39, category: "Surveying", question: "The vertical distance above or below a reference datum is called:", options: ["Elevation", "Grade", "Slope", "Relief"], answer: 0 },
+            { id: 40, category: "Surveying", question: "Which curve provides a gradual transition from a tangent to a circular curve?", options: ["Compound Curve", "Reverse Curve", "Spiral Curve", "Vertical Curve"], answer: 2 },
+            { id: 41, category: "Surveying", question: "The effect of Earth's curvature makes objects appear ___ than they actually are.", options: ["Higher", "Lower", "Larger", "Smaller"], answer: 1 },
+            { id: 42, category: "Surveying", question: "In a mass haul diagram, the area between the mass curve and the balance line represents:", options: ["Cut volume", "Fill volume", "Haul distance", "Volume x Distance (Haul)"], answer: 3 },
+            { id: 43, category: "Surveying", question: "The point where a circular curve begins is called:", options: ["PC (Point of Curvature)", "PT (Point of Tangency)", "PI (Point of Intersection)", "POC (Point on Curve)"], answer: 0 },
+            { id: 44, category: "Surveying", question: "A line connecting points of equal elevation is called a:", options: ["Profile", "Cross-section", "Contour line", "Grade line"], answer: 2 },
+            { id: 45, category: "Surveying", question: "The standard Stadia Interval Factor (K) for most modern instruments is:", options: ["10", "50", "100", "200"], answer: 2 },
+            { id: 46, category: "Surveying", question: "The angular distance of a heavenly body north or south of the celestial equator is:", options: ["Latitude", "Declination", "Altitude", "Azimuth"], answer: 1 },
+            { id: 47, category: "Surveying", question: "In leveling, 'BM' stands for:", options: ["Basic Mark", "Back Mark", "Bench Mark", "Base Measure"], answer: 2 },
+            { id: 48, category: "Surveying", question: "Balancing a traverse involves correcting which types of errors?", options: ["Angular only", "Linear only", "Both Angular and Linear", "Mistakes"], answer: 2 },
+            { id: 49, category: "Surveying", question: "The 'Height of Instrument' (HI) in differential leveling is:", options: ["Elevation of BM + Backsight", "Elevation of BM - Backsight", "Elevation of BM + Foresight", "Elevation of TP - Foresight"], answer: 0 },
+
+            // 8. MATERIALS
+            { id: 50, category: "Materials", question: "The separation of coarse aggregates from the mortar in concrete is called:", options: ["Bleeding", "Segregation", "Creep", "Shrinkage"], answer: 1 },
+            { id: 51, category: "Materials", question: "Which test determines the consistency or workability of fresh concrete?", options: ["Compression Test", "Tensile Test", "Slump Test", "Hardness Test"], answer: 2 },
+            { id: 52, category: "Materials", question: "Admixtures used to delay the setting of concrete are called:", options: ["Accelerators", "Retarders", "Plasticizers", "Air-entraining agents"], answer: 1 },
+            { id: 53, category: "Materials", question: "The property of fresh concrete to separate water from the solid materials is:", options: ["Bleeding", "Segregation", "Hydration", "Laitance"], answer: 0 },
+            { id: 54, category: "Materials", question: "Reinforcing steel bars are deformed to:", options: ["Increase tensile strength", "Prevent corrosion", "Improve bond with concrete", "Reduce weight"], answer: 2 },
+            { id: 55, category: "Materials", question: "What is the standard weight of a bag of cement in the Philippines?", options: ["25 kg", "40 kg", "50 kg", "100 lbs"], answer: 1 },
+            { id: 56, category: "Materials", question: "A defect in timber caused by the separation of the wood between growth rings is:", options: ["Knot", "Shake", "Check", "Wane"], answer: 1 },
+            { id: 57, category: "Materials", question: "Which asphalt product is liquid at room temperature?", options: ["Asphalt Cement", "Cutback Asphalt", "Asphalt Emulsion", "Blown Asphalt"], answer: 1 },
+            { id: 58, category: "Materials", question: "The chemical reaction between cement and water is called:", options: ["Oxidation", "Carbonation", "Hydration", "Polymerization"], answer: 2 },
+            { id: 59, category: "Materials", question: "Which type of cement is High Early Strength?", options: ["Type I", "Type II", "Type III", "Type IV"], answer: 2 },
+            { id: 60, category: "Materials", question: "Aggregates passing the No. 4 sieve are classified as:", options: ["Coarse Aggregate", "Fine Aggregate", "Silt", "Filler"], answer: 1 },
+            { id: 61, category: "Materials", question: "Which test is used to measure the resistance of aggregates to abrasion?", options: ["Los Angeles Abrasion Test", "Soundness Test", "Specific Gravity Test", "Proctor Test"], answer: 0 },
+            { id: 62, category: "Materials", question: "Fly ash is a byproduct of:", options: ["Steel manufacturing", "Coal combustion", "Cement production", "Glass manufacturing"], answer: 1 },
+            { id: 63, category: "Materials", question: "Galvanized iron is steel coated with:", options: ["Aluminum", "Tin", "Zinc", "Copper"], answer: 2 },
+
+            // 9. HIGHWAY & 11. TRANSPORTATION
+            { id: 64, category: "Transportation", question: "The maximum number of vehicles that can pass a point in one hour under prevailing roadway conditions is:", options: ["Traffic Volume", "Traffic Capacity", "Traffic Density", "Level of Service"], answer: 1 },
+            { id: 65, category: "Transportation", question: "Stopping Sight Distance (SSD) is composed of:", options: ["Reaction distance only", "Braking distance only", "Reaction distance + Braking distance", "Passing distance"], answer: 2 },
+            { id: 66, category: "Transportation", question: "A line composed of long dashes allowing overtaking when clear is colored:", options: ["Solid White", "Solid Yellow", "Broken Yellow", "Double Yellow"], answer: 2 },
+            { id: 67, category: "Transportation", question: "What describes the quality of traffic flow?", options: ["Capacity", "Level of Service (LOS)", "Peak Hour Factor", "Average Daily Traffic"], answer: 1 },
+            { id: 68, category: "Transportation", question: "The standard PIEV time (Perception-Reaction) used in AASHTO design is:", options: ["1.0 sec", "1.5 sec", "2.5 sec", "3.0 sec"], answer: 2 },
+            { id: 69, category: "Transportation", question: "The force that counteracts centrifugal force on a horizontal curve is provided by friction and:", options: ["Superelevation", "Gradient", "Camber", "Widening"], answer: 0 },
+            { id: 70, category: "Transportation", question: "CBR stands for:", options: ["Concrete Bearing Ratio", "California Bearing Ratio", "Cement Bond Rating", "Compaction Base Rate"], answer: 1 },
+            { id: 71, category: "Transportation", question: "Rigid pavements distribute loads through:", options: ["Grain-to-grain transfer", "Beam action/Slab action", "Subgrade deformation", "Shear transfer"], answer: 1 },
+            { id: 72, category: "Transportation", question: "Flexible pavements are typically made of:", options: ["Portland Cement Concrete", "Asphaltic Concrete", "Reinforced Concrete", "Pre-stressed Concrete"], answer: 1 },
+            { id: 73, category: "Transportation", question: "The crown of the road is designed to:", options: ["Increase speed", "Improve sight distance", "Provide drainage", "Separate lanes"], answer: 2 },
+            { id: 74, category: "Transportation", question: "Warning signs are typically what shape?", options: ["Circular", "Octagonal", "Diamond", "Rectangular"], answer: 2 },
+            { id: 75, category: "Transportation", question: "The color Red in traffic signs indicates:", options: ["Warning", "Prohibition/Stop", "Direction", "Recreation"], answer: 1 },
+            { id: 76, category: "Transportation", question: "Average Daily Traffic (ADT) is the total traffic volume during a given time period divided by:", options: ["365", "The number of days in that period", "24", "The peak hour volume"], answer: 1 },
+            { id: 77, category: "Transportation", question: "In highway geometric design, a vertical curve that is concave upward is a:", options: ["Crest Curve", "Sag Curve", "Spiral Curve", "Reverse Curve"], answer: 1 },
+            { id: 78, category: "Transportation", question: "Rumble strips are used to:", options: ["Drain water", "Alert drowsy drivers", "Reinforce pavement", "Measure speed"], answer: 1 },
+            { id: 79, category: "Transportation", question: "Expansion joints are essential in which type of pavement?", options: ["Flexible Pavement", "Rigid Pavement", "Gravel Road", "Earth Road"], answer: 1 },
+            { id: 80, category: "Transportation", question: "The spacing of contraction joints in rigid pavement depends mainly on:", options: ["Slab thickness and friction", "Vehicle weight", "Tire pressure", "Wind speed"], answer: 0 },
+            { id: 81, category: "Transportation", question: "The '30th highest hourly volume' is often used for:", options: ["Design Hourly Volume", "Average Annual Daily Traffic", "Capacity Analysis", "Signal Timing"], answer: 0 },
+
+            // 10. SAFETY (COSH)
+            { id: 82, category: "Safety", question: "What is the DOLE Department Order for Guidelines on Occupational Safety and Health in the Construction Industry?", options: ["DO 18-A", "DO 13", "DO 174", "DO 198"], answer: 1 },
+            { id: 83, category: "Safety", question: "PPE stands for:", options: ["Public Protection Equipment", "Personal Protective Equipment", "Project Planning Execution", "Personnel Policy Enforcement"], answer: 1 },
+            { id: 84, category: "Safety", question: "The safety officer in a construction site must be accredited by:", options: ["DPWH", "DTI", "DOLE/BWC", "PRC"], answer: 2 },
+            { id: 85, category: "Safety", question: "Toolbox meetings are typically conducted:", options: ["Once a month", "Before work starts (Daily/Weekly)", "After an accident", "During lunch break"], answer: 1 },
+            { id: 86, category: "Safety", question: "Which color is used for safety helmets of Safety Officers?", options: ["White", "Yellow", "Red", "Green/Blue (varies but distinctive)"], answer: 3 },
+            { id: 87, category: "Safety", question: "Excavations over what depth require shoring or sloping?", options: ["1.0 meter", "1.5 meters", "2.0 meters", "3.0 meters"], answer: 1 },
+            { id: 88, category: "Safety", question: "What represents the 'hierarchy of controls' from most to least effective?", options: ["PPE, Admin, Engineering, Elimination", "Elimination, Substitution, Engineering, Admin, PPE", "Engineering, PPE, Elimination", "Admin, PPE, Engineering"], answer: 1 },
+            { id: 89, category: "Safety", question: "A 'Near Miss' is:", options: ["An accident with minor injury", "An unplanned event that did not result in injury but had potential", "A fatal accident", "A violation of code"], answer: 1 },
+            { id: 90, category: "Safety", question: "Scaffolding erection must be supervised by a:", options: ["Project Owner", "Certified Scaffolder/Safety Officer", "Mason", "Laborer"], answer: 1 },
+
+            // 12. QUANTITY SURVEYING & 13. PRINCIPLES & 15. EQUIPMENT
+            { id: 91, category: "Construction", question: "PERT stands for:", options: ["Project Evaluation and Review Technique", "Program Estimation and Review Task", "Project Execution and Resource Tool", "Program Evaluation and Review Technique"], answer: 3 },
+            { id: 92, category: "Construction", question: "CPM stands for:", options: ["Construction Project Management", "Critical Path Method", "Cost Projection Model", "Critical Planning Mode"], answer: 1 },
+            { id: 93, category: "Construction", question: "The path in a project network with the longest duration is the:", options: ["Dummy Path", "Critical Path", "Slack Path", "Float Path"], answer: 1 },
+            { id: 94, category: "Construction", question: "The amount of time a task can be delayed without delaying the project is:", options: ["Lag", "Lead", "Total Float", "Duration"], answer: 2 },
+            { id: 95, category: "Construction", question: "A bar chart used for project scheduling is commonly called a:", options: ["Pie Chart", "Gantt Chart", "Histogram", "Scatter Plot"], answer: 1 },
+            { id: 96, category: "Construction", question: "Which equipment is best for excavating underwater?", options: ["Bulldozer", "Scraper", "Clamshell/Dragline", "Grader"], answer: 2 },
+            { id: 97, category: "Construction", question: "A 'Sheep's foot roller' is best used for compacting:", options: ["Sand", "Gravel", "Clay/Cohesive Soil", "Asphalt"], answer: 2 },
+            { id: 98, category: "Construction", question: "The process of leveling and smoothing the final surface of the soil is called:", options: ["Grading", "Compacting", "Trenching", "Hauling"], answer: 0 },
+            { id: 99, category: "Construction", question: "Which contract type has the owner pay the contractor for all costs plus a fee?", options: ["Lump Sum", "Unit Price", "Cost Plus", "Turnkey"], answer: 2 },
+            { id: 100, category: "Construction", question: "Value Engineering aims to:", options: ["Reduce cost without reducing quality", "Reduce quality to save money", "Increase cost to increase quality", "Speed up construction regardless of cost"], answer: 0 },
+            { id: 101, category: "Construction", question: "The legal agreement between the owner and contractor is:", options: ["The Bid", "The Specification", "The Contract", "The Notice to Proceed"], answer: 2 },
+            { id: 102, category: "Construction", question: "In a Unit Price contract, payment is based on:", options: ["Fixed total price", "Actual quantities of work performed", "Cost of materials only", "Time spent"], answer: 1 },
+            { id: 103, category: "Construction", question: "A written order by the owner to the contractor for a change in work is a:", options: ["Change Order", "RFI", "Submittal", "Punch List"], answer: 0 },
+            { id: 104, category: "Construction", question: "The list of items to be fixed before final acceptance is:", options: ["Bill of Quantities", "Punch List", "Schedule of Values", "Purchase Order"], answer: 1 },
+            { id: 105, category: "Construction", question: "Which equipment is primarily used for pushing soil?", options: ["Excavator", "Bulldozer", "Crane", "Paver"], answer: 1 },
+            { id: 106, category: "Construction", question: "Which equipment is used to transport materials over long distances?", options: ["Dozer", "Scraper", "Grader", "Backhoe"], answer: 1 },
+            { id: 107, category: "Construction", question: "The 'angle of repose' refers to:", options: ["Angle of a slope", "Steepest angle a material can be piled without slumping", "Angle of a roof", "Angle of friction"], answer: 1 },
+            { id: 108, category: "Construction", question: "Tremie pipes are used for:", options: ["Drainage", "Underwater concreting", "Ventilation", "Electrical wiring"], answer: 1 },
+            { id: 109, category: "Construction", question: "Gunite or Shotcrete refers to:", options: ["Hand-mixed concrete", "Pneumatically applied mortar/concrete", "Self-leveling concrete", "Pre-cast concrete"], answer: 1 },
+            { id: 110, category: "Construction", question: "The ratio of water to cement by weight is called:", options: ["Mix ratio", "Water-Cement Ratio", "Slump value", "Yield"], answer: 1 },
+
+            // FILLING UP TO 200 WITH MIXED TOPICS FOR ROBUSTNESS
+            { id: 111, category: "Calculus", question: "The derivative of a constant is:", options: ["1", "0", "Undefined", "Infinity"], answer: 1 },
+            { id: 112, category: "Calculus", question: "Integration is the inverse operation of:", options: ["Multiplication", "Differentiation", "Factorization", "Exponentiation"], answer: 1 },
+            { id: 113, category: "Diff Eq", question: "Orthogonal trajectories are curves that intersect a family of curves at:", options: ["0 degrees", "45 degrees", "90 degrees", "180 degrees"], answer: 2 },
+            { id: 114, category: "Physics", question: "The coefficient of restitution for a perfectly elastic collision is:", options: ["0", "0.5", "1", "-1"], answer: 2 },
+            { id: 115, category: "Physics", question: "The unit of Force in SI is:", options: ["Joule", "Watt", "Newton", "Pascal"], answer: 2 },
+            { id: 116, category: "Physics", question: "Kinetic energy is dependent on mass and:", options: ["Height", "Velocity", "Gravity", "Time"], answer: 1 },
+            { id: 117, category: "Economy", question: "Inflation is defined as:", options: ["Increase in purchasing power", "Decrease in price levels", "Increase in price levels / Decrease in purchasing power", "Fixed interest rate"], answer: 2 },
+            { id: 118, category: "Economy", question: "A bond is:", options: ["An equity share", "A debt security/IOU", "A bank deposit", "A tax document"], answer: 1 },
+            { id: 119, category: "Surveying", question: "Which instrument measures only vertical angles?", options: ["Theodolite", "Total Station", "Clinometer", "Planimeter"], answer: 2 },
+            { id: 120, category: "Surveying", question: "Geodetic surveying differs from plane surveying because it considers:", options: ["Wind speed", "Temperature", "Earth's curvature", "Gravity"], answer: 2 },
+            { id: 121, category: "Surveying", question: "A 'turning point' in leveling is a point where:", options: ["The instrument is moved", "Only FS is taken", "Only BS is taken", "Both FS and BS are taken"], answer: 3 },
+            { id: 122, category: "Materials", question: "Which lumber defect involves a crack across the annual rings?", options: ["Shake", "Check", "Knot", "Warp"], answer: 1 },
+            { id: 123, category: "Materials", question: "FRP stands for:", options: ["Fiber Reinforced Polymer", "Fire Resistant Plastic", "Flexible Rubber Pipe", "Formed Reinforced Plate"], answer: 0 },
+            { id: 124, category: "Transportation", question: "In traffic engineering, 'Gap' refers to:", options: ["Distance between vehicles", "Time between vehicles", "Width of lane", "Length of vehicle"], answer: 1 },
+            { id: 125, category: "Transportation", question: "A Diamond Interchange is used to connect:", options: ["Two freeways", "A freeway and a minor road", "Two minor roads", "A railway and a road"], answer: 1 },
+            { id: 126, category: "Safety", question: "Class A fires involve:", options: ["Flammable liquids", "Electrical equipment", "Ordinary combustibles (wood, paper)", "Metals"], answer: 2 },
+            { id: 127, category: "Construction", question: "A 'Fast Track' project means:", options: ["Construction starts before design is complete", "Contractor is paid early", "Project has no float", "Workers work 24/7"], answer: 0 },
+            { id: 128, category: "Construction", question: "Bidding where only pre-selected contractors are invited is:", options: ["Open Bidding", "Closed/Select Bidding", "Competitive Bidding", "Public Bidding"], answer: 1 },
+            { id: 129, category: "Calculus", question: "The point where the concavity of a curve changes is:", options: ["Maxima", "Minima", "Point of Inflection", "Cusp"], answer: 2 },
+            { id: 130, category: "Calculus", question: "L'Hopital's Rule is used to evaluate limits that result in:", options: ["Zero", "Infinity", "Indeterminate forms", "Rational numbers"], answer: 2 },
+            { id: 131, category: "Diff Eq", question: "The population growth model dP/dt = kP is an example of:", options: ["Linear Decay", "Exponential Growth", "Logistic Growth", "Harmonic Motion"], answer: 1 },
+            { id: 132, category: "Data Analysis", question: "Which graph displays the five-number summary?", options: ["Histogram", "Boxplot", "Scatterplot", "Pie Chart"], answer: 1 },
+            { id: 133, category: "Data Analysis", question: "Correlation coefficient 'r' ranges from:", options: ["0 to 1", "-1 to 1", "0 to 100", "-infinity to infinity"], answer: 1 },
+            { id: 134, category: "Numerical", question: "Truncation error is caused by:", options: ["Rounding off numbers", "Approximating an exact mathematical procedure", "Human mistake", "Computer glitch"], answer: 1 },
+            { id: 135, category: "Physics", question: "Impulse is equal to the change in:", options: ["Energy", "Power", "Momentum", "Acceleration"], answer: 2 },
+            { id: 136, category: "Physics", question: "The center of gravity is the point where:", options: ["Mass is concentrated", "Weight is evenly distributed", "Motion starts", "Friction is zero"], answer: 1 },
+            { id: 137, category: "Economy", question: "Breakeven point is where:", options: ["Income > Cost", "Income < Cost", "Income = Cost", "Profit is max"], answer: 2 },
+            { id: 138, category: "Economy", question: "Effective annual interest rate is always ___ nominal rate (for m > 1).", options: ["Less than", "Equal to", "Greater than", "Unrelated to"], answer: 2 },
+            { id: 139, category: "Surveying", question: "The meridian determined by the observation of celestial bodies is:", options: ["Magnetic Meridian", "True/Astronomic Meridian", "Assumed Meridian", "Grid Meridian"], answer: 1 },
+            { id: 140, category: "Surveying", question: "Isogonic lines connect points of equal:", options: ["Elevation", "Temperature", "Magnetic Declination", "Rainfall"], answer: 2 },
+            { id: 141, category: "Surveying", question: "Which is not a method of plane table surveying?", options: ["Radiation", "Intersection", "Resection", "Trilateration"], answer: 3 },
+            { id: 142, category: "Materials", question: "The hydration of cement is an ___ reaction.", options: ["Endothermic", "Exothermic", "Isothermic", "Adiabatic"], answer: 1 },
+            { id: 143, category: "Materials", question: "Standard size of a concrete cylinder sample:", options: ["6x12 inches", "4x8 inches", "150x150 mm", "10x20 inches"], answer: 0 },
+            { id: 144, category: "Transportation", question: "Merging is the process of:", options: ["Leaving a traffic stream", "Crossing a traffic stream", "Entering a traffic stream", "Stopping"], answer: 2 },
+            { id: 145, category: "Transportation", question: "A grade separated intersection is called:", options: ["Roundabout", "Interchange", "Signalized Intersection", "Stop-controlled"], answer: 1 },
+            { id: 146, category: "Safety", question: "The 'Hot Work Permit' is required for:", options: ["Working in summer", "Welding/Cutting operations", "Handling hot asphalt", "Cooking"], answer: 1 },
+            { id: 147, category: "Construction", question: "A 'milestone' in a project schedule has duration:", options: ["1 day", "1 week", "0", "Variable"], answer: 2 },
+            { id: 148, category: "Construction", question: "Epoxy injection is used to repair:", options: ["Large holes", "Cracks in concrete", "Steel corrosion", "Wood rot"], answer: 1 },
+            { id: 149, category: "Calculus", question: "An asymptote that is neither vertical nor horizontal is:", options: ["Curved", "Oblique/Slant", "Parabolic", "Infinite"], answer: 1 },
+            { id: 150, category: "Physics", question: "Fluid pressure at a point depends on:", options: ["Surface area", "Depth and Density", "Volume of container", "Shape of container"], answer: 1 },
+            { id: 151, category: "Economy", question: "Payback period is the time required to:", options: ["Pay a loan", "Recover the investment", "Depreciate an asset", "Build the project"], answer: 1 },
+            { id: 152, category: "Surveying", question: "The telescope crosshairs are attached to the:", options: ["Objective lens", "Eyepiece", "Reticle ring", "Focusing screw"], answer: 2 },
+            { id: 153, category: "Materials", question: "Honeycombing in concrete is caused by:", options: ["Too much water", "Poor vibration/consolidation", "High cement content", "Rapid drying"], answer: 1 },
+            { id: 154, category: "Transportation", question: "Weaving length is the distance available for:", options: ["Stopping", "Crossing traffic streams", "Parking", "Turning"], answer: 1 },
+            { id: 155, category: "Construction", question: "Which document prevails in case of discrepancy (usually)?", options: ["Drawings", "Specifications", "Bill of Materials", "General Conditions"], answer: 1 },
+            { id: 156, category: "Calculus", question: "The second derivative test is used to find:", options: ["Roots", "Concavity and Extrema", "Area", "Limits"], answer: 1 },
+            { id: 157, category: "Diff Eq", question: "Variables separable is a method for:", options: ["First order ODEs", "Second order ODEs", "PDEs", "Algebraic equations"], answer: 0 },
+            { id: 158, category: "Physics", question: "Pascal's Law applies to:", options: ["Solids", "Enclosed fluids", "Moving fluids", "Gases only"], answer: 1 },
+            { id: 159, category: "Economy", question: "Salvage value is estimated at the:", options: ["Beginning of life", "Middle of life", "End of useful life", "Time of purchase"], answer: 2 },
+            { id: 160, category: "Surveying", question: "Planimeter is used to measure:", options: ["Distance", "Angle", "Area", "Volume"], answer: 2 },
+            { id: 161, category: "Materials", question: "MDF stands for:", options: ["Medium Density Fiberboard", "Massive Density Frame", "Mixed Dry Filler", "Modern Design Floor"], answer: 0 },
+            { id: 162, category: "Transportation", question: "Skid resistance is a property of:", options: ["Subgrade", "Base course", "Pavement surface", "Shoulder"], answer: 2 },
+            { id: 163, category: "Construction", question: "Pile driving is a method for:", options: ["Deep foundations", "Shallow foundations", "Wall finishing", "Roofing"], answer: 0 },
+            { id: 164, category: "Calculus", question: "Integration by parts is based on the differentiation rule of:", options: ["Chain Rule", "Product Rule", "Quotient Rule", "Power Rule"], answer: 1 },
+            { id: 165, category: "Physics", question: "Torque is the cross product of position vector and:", options: ["Velocity", "Force", "Momentum", "Acceleration"], answer: 1 },
+            { id: 166, category: "Economy", question: "Annuity due differs from ordinary annuity because payments are made at the:", options: ["End of period", "Beginning of period", "Middle of period", "Random times"], answer: 1 },
+            { id: 167, category: "Surveying", question: "The error due to expansion of tape is:", options: ["Systematic", "Accidental", "Personal", "Instrumental"], answer: 0 },
+            { id: 168, category: "Materials", question: "Specific gravity of cement is approximately:", options: ["2.50", "3.15", "1.00", "7.85"], answer: 1 },
+            { id: 169, category: "Transportation", question: "Gore area is:", options: ["Parking area", "Triangular area at divergence/convergence", "Rest area", "Toll booth area"], answer: 1 },
+            { id: 170, category: "Construction", question: "Caissons are:", options: ["Box-like foundations (often underwater)", "Roof trusses", "Window frames", "Measuring tools"], answer: 0 },
+            { id: 171, category: "Calculus", question: "The domain of ln(x) is:", options: ["All real numbers", "x > 0", "x >= 0", "x != 0"], answer: 1 },
+            { id: 172, category: "Diff Eq", question: "An integrating factor is used to solve:", options: ["Linear first order Eq", "Exact Eq", "Homogeneous Eq", "Bernoulli Eq"], answer: 0 },
+            { id: 173, category: "Physics", question: "The speed of sound is fastest in:", options: ["Vacuum", "Gas", "Liquid", "Solid"], answer: 3 },
+            { id: 174, category: "Economy", question: "Perpetuity is an annuity where n approaches:", options: ["0", "100", "Infinity", "1"], answer: 2 },
+            { id: 175, category: "Surveying", question: "Least Squares method is used for:", options: ["Plotting", "Adjustment of errors", "Measuring distance", "Calculating area"], answer: 1 },
+            { id: 176, category: "Materials", question: "PVC stands for:", options: ["Polyvinyl Chloride", "Polymer Vinyl Concrete", "Plastic Volume Control", "Pipe Valve Connector"], answer: 0 },
+            { id: 177, category: "Transportation", question: "Superelevation is expressed as:", options: ["Degrees", "Percentage/Decimal", "Meters", "Newtons"], answer: 1 },
+            { id: 178, category: "Construction", question: "Shoring is used to:", options: ["Support excavations", "Finish floors", "Paint walls", "Install pipes"], answer: 0 },
+            { id: 179, category: "Safety", question: "Decibel (dB) measures:", options: ["Light intensity", "Sound intensity", "Heat", "Vibration"], answer: 1 },
+            { id: 180, category: "Data Analysis", question: "A histogram is used for ___ data.", options: ["Categorical", "Continuous", "Nominal", "Binary"], answer: 1 },
+            { id: 181, category: "Materials", question: "Which admixture introduces microscopic bubbles?", options: ["Retarder", "Accelerator", "Air-entraining agent", "Water reducer"], answer: 2 },
+            { id: 182, category: "Surveying", question: "Zenith angle is measured from:", options: ["Horizon", "Vertical (overhead)", "Nadir", "North"], answer: 1 },
+            { id: 183, category: "Calculus", question: "Gradient of a scalar field produces a:", options: ["Scalar", "Vector", "Matrix", "Tensor"], answer: 1 },
+            { id: 184, category: "Economy", question: "Depletion refers to the consumption of:", options: ["Machinery", "Natural Resources", "Money", "Buildings"], answer: 1 },
+            { id: 185, category: "Transportation", question: "AADT stands for:", options: ["Annual Average Daily Traffic", "Average Annual Daily Traffic", "Annual Area Driving Time", "Average Area Driving Traffic"], answer: 1 },
+            { id: 186, category: "Construction", question: "Rebar 'development length' ensures:", options: ["Bar doesn't rust", "Bar transfers stress to concrete without pullout", "Bar is long enough to reach the other side", "Bar is easy to bend"], answer: 1 },
+            { id: 187, category: "Safety", question: "GFCI stands for:", options: ["Ground Fault Circuit Interrupter", "General Fire Control Interface", "Ground Floor Construction Item", "Global Fuse Control Index"], answer: 0 },
+            { id: 188, category: "Physics", question: "Heat transfer by direct contact is:", options: ["Convection", "Radiation", "Conduction", "Induction"], answer: 2 },
+            { id: 189, category: "Materials", question: "Toughness is the ability to:", options: ["Resist indentation", "Absorb energy before fracture", "Resist scratching", "Return to original shape"], answer: 1 },
+            { id: 190, category: "Surveying", question: "Contours that touch or cross indicate:", options: ["Valley", "Ridge", "Overhanging cliff/cave", "Plain"], answer: 2 },
+            { id: 191, category: "Calculus", question: "The derivative of sin(x) is:", options: ["cos(x)", "-cos(x)", "tan(x)", "sec(x)"], answer: 0 },
+            { id: 192, category: "Transportation", question: "Parking parallel to the curb is:", options: ["Angle parking", "Parallel parking", "Perpendicular parking", "Double parking"], answer: 1 },
+            { id: 193, category: "Construction", question: "Pre-stressed concrete involves:", options: ["Tensioning steel before service loads", "Adding more cement", "Heating the concrete", "Using plastic bars"], answer: 0 },
+            { id: 194, category: "Economy", question: "The 'Rule of 72' estimates:", options: ["Depreciation", "Doubling time of investment", "Tax rate", "Inflation"], answer: 1 },
+            { id: 195, category: "Materials", question: "Creep is the:", options: ["Immediate elastic deformation", "Time-dependent deformation under load", "Thermal expansion", "Shrinkage due to drying"], answer: 1 },
+            { id: 196, category: "Safety", question: "MSDS (now SDS) stands for:", options: ["Material Safety Data Sheet", "Management Safety Design Standard", "Manual for Safe Design Structures", "Material Storage Data System"], answer: 0 },
+            { id: 197, category: "Diff Eq", question: "A Wronskian determinant is used to check for:", options: ["Linear Independence", "Stability", "Exactness", "Curvature"], answer: 0 },
+            { id: 198, category: "Surveying", question: "Reciprocal leveling eliminates:", options: ["Curvature and Refraction errors", "Instrumental errors", "Both", "Neither"], answer: 2 },
+            { id: 199, category: "Transportation", question: "Yellow pavement markings separate traffic moving in:", options: ["Same direction", "Opposite direction", "Any direction", "Crossing direction"], answer: 1 },
+            { id: 200, category: "Construction", question: "A 'Change Order' usually affects:", options: ["Cost only", "Time only", "Cost and/or Time", "Neither"], answer: 2 },
+        ];
+
+        // --- COMPONENTS ---
+
+        function App() {
+            const [mode, setMode] = useState(null); // 'practice', 'exam', 'review', null
+            const [currentQ, setCurrentQ] = useState(0);
+            const [answers, setAnswers] = useState({}); // { 0: 1, 1: 0, ... }
+            const [showResult, setShowResult] = useState(false);
+            const [timeLeft, setTimeLeft] = useState(4 * 60 * 60); // 4 hours in seconds
+            const [isTimerActive, setIsTimerActive] = useState(false);
+
+            // Timer Logic
+            useEffect(() => {
+                let interval = null;
+                if (isTimerActive && timeLeft > 0) {
+                    interval = setInterval(() => {
+                        setTimeLeft(prev => prev - 1);
+                    }, 1000);
+                } else if (timeLeft === 0) {
+                    finishExam();
+                }
+                return () => clearInterval(interval);
+            }, [isTimerActive, timeLeft]);
+
+            const formatTime = (seconds) => {
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                const s = seconds % 60;
+                return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+            };
+
+            const startExam = (selectedMode) => {
+                setMode(selectedMode);
+                setCurrentQ(0);
+                setAnswers({});
+                setShowResult(false);
+                setTimeLeft(4 * 60 * 60);
+                setIsTimerActive(selectedMode === 'exam');
+            };
+
+            const handleAnswer = (optionIndex) => {
+                setAnswers(prev => ({ ...prev, [currentQ]: optionIndex }));
+            };
+
+            const nextQuestion = () => {
+                if (currentQ < EXAM_DATA.length - 1) setCurrentQ(prev => prev + 1);
+            };
+
+            const prevQuestion = () => {
+                if (currentQ > 0) setCurrentQ(prev => prev - 1);
+            };
+
+            const finishExam = () => {
+                setIsTimerActive(false);
+                setShowResult(true);
+            };
+
+            const calculateScore = () => {
+                let score = 0;
+                EXAM_DATA.forEach((q, idx) => {
+                    if (answers[idx] === q.answer) score++;
+                });
+                return score;
+            };
+
+            // Screens
+            if (!mode) return <StartScreen onStart={startExam} />;
+            if (showResult) return <ResultScreen score={calculateScore()} total={EXAM_DATA.length} answers={answers} data={EXAM_DATA} onRestart={() => setMode(null)} />;
+
+            const progress = ((currentQ + 1) / EXAM_DATA.length) * 100;
+            const currentQuestion = EXAM_DATA[currentQ];
+            const isAnswered = answers[currentQ] !== undefined;
+
+            return (
+                <div className="min-h-screen p-4 md:p-8 max-w-4xl mx-auto">
+                    {/* Header */}
+                    <div className="bg-white rounded-lg shadow-sm p-4 mb-6 flex justify-between items-center sticky top-0 z-10 border-b border-gray-200">
+                        <div>
+                            <h2 className="font-bold text-gray-800 text-lg md:text-xl">{mode === 'exam' ? 'Mock Board Exam' : 'Practice Mode'}</h2>
+                            <p className="text-sm text-gray-500">MSTE & Construction</p>
+                        </div>
+                        <div className="text-right">
+                            {mode === 'exam' && <div className="text-xl font-mono font-bold text-red-600">{formatTime(timeLeft)}</div>}
+                            <div className="text-sm text-gray-600">Item {currentQ + 1} of {EXAM_DATA.length}</div>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                        <div className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                    </div>
+
+                    {/* Question Card */}
+                    <div className="bg-white rounded-xl shadow-lg p-6 md:p-8 mb-6">
+                        <div className="mb-4">
+                            <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full font-semibold uppercase tracking-wide">
+                                {currentQuestion.category}
+                            </span>
+                        </div>
+                        <h3 className="text-xl md:text-2xl font-medium text-gray-900 mb-8 leading-relaxed">
+                            {currentQuestion.question}
+                        </h3>
+
+                        <div className="space-y-3">
+                            {currentQuestion.options.map((option, idx) => {
+                                let btnClass = "w-full text-left p-4 rounded-lg border-2 transition-all ";
+                                
+                                if (mode === 'practice' && isAnswered) {
+                                    if (idx === currentQuestion.answer) btnClass += "border-green-500 bg-green-50 text-green-700 font-medium";
+                                    else if (idx === answers[currentQ]) btnClass += "border-red-500 bg-red-50 text-red-700";
+                                    else btnClass += "border-gray-200 opacity-50";
+                                } else {
+                                    if (answers[currentQ] === idx) btnClass += "border-blue-500 bg-blue-50 text-blue-700 font-medium shadow-sm";
+                                    else btnClass += "border-gray-200 hover:border-blue-300 hover:bg-gray-50";
+                                }
+
+                                return (
+                                    <button 
+                                        key={idx} 
+                                        onClick={() => !isAnswered || mode === 'exam' ? handleAnswer(idx) : null}
+                                        disabled={mode === 'practice' && isAnswered}
+                                        className={btnClass}
+                                    >
+                                        <div className="flex items-center">
+                                            <div className={`w-8 h-8 rounded-full border flex items-center justify-center mr-4 text-sm ${answers[currentQ] === idx ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 text-gray-500'}`}>
+                                                {String.fromCharCode(65 + idx)}
+                                            </div>
+                                            {option}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        
+                        {/* Practice Mode Explanation (Optional placeholder) */}
+                        {mode === 'practice' && isAnswered && (
+                            <div className={`mt-6 p-4 rounded-lg ${answers[currentQ] === currentQuestion.answer ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                <strong>{answers[currentQ] === currentQuestion.answer ? 'Correct!' : 'Incorrect.'}</strong> The correct answer is {String.fromCharCode(65 + currentQuestion.answer)}.
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="flex justify-between items-center">
+                        <button 
+                            onClick={prevQuestion} 
+                            disabled={currentQ === 0}
+                            className={`px-6 py-2 rounded-lg font-medium ${currentQ === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'}`}
+                        >
+                            Previous
+                        </button>
+                        
+                        {currentQ === EXAM_DATA.length - 1 ? (
+                            <button 
+                                onClick={finishExam}
+                                className="px-8 py-2 rounded-lg font-medium bg-green-600 text-white hover:bg-green-700 shadow-md transform hover:scale-105 transition-all"
+                            >
+                                Submit Exam
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={nextQuestion}
+                                className="px-8 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 shadow-md transform hover:scale-105 transition-all"
+                            >
+                                Next
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function StartScreen({ onStart }) {
+            return (
+                <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+                    <div className="bg-white max-w-2xl w-full rounded-2xl shadow-xl p-8 text-center border border-gray-100">
+                        <div className="mb-6 bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto text-blue-600 text-3xl font-bold">CE</div>
+                        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Civil Engineering Mock Board</h1>
+                        <p className="text-gray-500 mb-8 text-lg">MSTE & Construction Management • 200 Items • No Computation</p>
+                        
+                        <div className="grid md:grid-cols-2 gap-4 mb-8 text-left">
+                            <div className="p-4 border rounded-xl hover:border-blue-500 cursor-pointer transition-all group" onClick={() => onStart('practice')}>
+                                <h3 className="font-bold text-lg text-gray-800 group-hover:text-blue-600">Practice Mode</h3>
+                                <p className="text-sm text-gray-500 mt-1">Immediate feedback after each answer. Best for reviewing concepts.</p>
+                            </div>
+                            <div className="p-4 border rounded-xl hover:border-red-500 cursor-pointer transition-all group" onClick={() => onStart('exam')}>
+                                <h3 className="font-bold text-lg text-gray-800 group-hover:text-red-600">Exam Mode</h3>
+                                <p className="text-sm text-gray-500 mt-1">4-hour timer. Results shown at the end. Simulates actual board conditions.</p>
+                            </div>
+                        </div>
+
+                        <div className="text-xs text-gray-400">
+                            Based on PRC Table of Specifications (2022)
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function ResultScreen({ score, total, answers, data, onRestart }) {
+            const percentage = Math.round((score / total) * 100);
+            const [filter, setFilter] = useState('all'); // all, incorrect
+
+            const filteredData = data.filter((q, idx) => {
+                if (filter === 'incorrect') return answers[idx] !== q.answer;
+                return true;
+            });
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+                    <div className="max-w-5xl mx-auto">
+                        <div className="bg-white rounded-xl shadow-lg p-8 mb-8 text-center">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">Exam Results</h2>
+                            <div className="flex flex-col md:flex-row justify-center items-center gap-8 mb-6">
+                                <div className="w-40 h-40 rounded-full border-8 border-blue-500 flex items-center justify-center flex-col">
+                                    <span className="text-4xl font-bold text-gray-900">{percentage}%</span>
+                                    <span className="text-xs text-gray-500">Passing: 70%</span>
+                                </div>
+                                <div className="text-left space-y-2">
+                                    <div className="text-gray-600">Score: <span className="font-bold text-gray-900 text-lg">{score} / {total}</span></div>
+                                    <div className="text-gray-600">Rating: <span className={`font-bold ${percentage >= 70 ? 'text-green-600' : 'text-red-600'}`}>{percentage >= 70 ? 'PASSED' : 'FAILED'}</span></div>
+                                </div>
+                            </div>
+                            <button onClick={onRestart} className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900">
+                                Take New Exam
+                            </button>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="flex justify-between items-center mb-6 border-b pb-4">
+                                <h3 className="font-bold text-xl text-gray-800">Item Analysis</h3>
+                                <div className="space-x-2">
+                                    <button 
+                                        onClick={() => setFilter('all')}
+                                        className={`px-3 py-1 rounded-md text-sm ${filter === 'all' ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-100'}`}
+                                    >
+                                        All Items
+                                    </button>
+                                    <button 
+                                        onClick={() => setFilter('incorrect')}
+                                        className={`px-3 py-1 rounded-md text-sm ${filter === 'incorrect' ? 'bg-red-100 text-red-700 font-medium' : 'text-gray-500 hover:bg-gray-100'}`}
+                                    >
+                                        Incorrect Only
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {filteredData.map((q) => {
+                                    const userAns = answers[q.id - 1];
+                                    const isCorrect = userAns === q.answer;
+                                    return (
+                                        <div key={q.id} className={`p-4 rounded-lg border-l-4 ${isCorrect ? 'border-green-500 bg-gray-50' : 'border-red-500 bg-red-50'}`}>
+                                            <div className="flex justify-between mb-2">
+                                                <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">{q.category}</span>
+                                                <span className={`text-xs font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                                                    {isCorrect ? 'Correct' : 'Incorrect'}
+                                                </span>
+                                            </div>
+                                            <p className="font-medium text-gray-900 mb-2">{q.id}. {q.question}</p>
+                                            <div className="text-sm text-gray-600 space-y-1">
+                                                <div className={userAns === q.answer ? "font-semibold text-green-700" : "line-through text-red-400"}>
+                                                    You answered: {q.options[userAns] || "No Answer"}
+                                                </div>
+                                                {!isCorrect && (
+                                                    <div className="font-semibold text-green-700">
+                                                        Correct answer: {q.options[q.answer]}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {filteredData.length === 0 && (
+                                    <div className="text-center py-12 text-gray-500">
+                                        No items found in this category. Good job!
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
